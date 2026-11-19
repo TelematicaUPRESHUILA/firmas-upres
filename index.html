@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Firma de documentos · Telemática UPRES Huila</title>
+<style>
+  :root { --verde:#1f3d2b; --verde2:#2f5a3f; --fondo:#f2f4ef; --borde:#d6dbd2; --texto:#1d221f; --suave:#5f6a62; --oro:#b8912f; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background:var(--fondo); color:var(--texto); font-size:16px; line-height:1.45; }
+  header { background:var(--verde); color:#fff; padding:14px 18px; border-bottom:3px solid var(--oro); }
+  header small { display:block; opacity:.75; font-size:12px; letter-spacing:.04em; text-transform:uppercase; }
+  header b { font-size:17px; }
+  main { max-width:680px; margin:0 auto; padding:16px 14px 40px; }
+  .pasos { display:flex; gap:8px; margin:2px 0 14px; font-size:13px; color:var(--suave); }
+  .pasos span { flex:1; padding:7px 10px; border-radius:8px; background:#e6eae3; text-align:center; }
+  .pasos span.on { background:var(--verde); color:#fff; }
+  .card { background:#fff; border:1px solid var(--borde); border-radius:12px; padding:16px; margin-bottom:14px; }
+  h1 { font-size:21px; margin:4px 0 6px; }
+  .sub { color:var(--suave); margin:0 0 4px; font-size:14px; }
+  .cred { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .cred div { background:var(--fondo); border-radius:8px; padding:10px 12px; }
+  .cred span { display:block; font-size:11px; color:var(--suave); text-transform:uppercase; letter-spacing:.05em; }
+  .cred b { font-family: ui-monospace, Consolas, monospace; font-size:19px; word-break:break-all; }
+  .dato { display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid #eef0ec; font-size:14px; }
+  .dato:last-child { border:0; } .dato span { color:var(--suave); } .dato b { text-align:right; font-weight:600; }
+  details { border:1px solid var(--borde); border-radius:10px; margin:10px 0; background:#fff; }
+  summary { padding:13px 14px; font-weight:600; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  summary::-webkit-details-marker { display:none; }
+  summary::after { content:"Leer"; font-size:12px; color:var(--verde2); border:1px solid var(--verde2); border-radius:20px; padding:2px 10px; white-space:nowrap; }
+  details[open] summary::after { content:"Cerrar"; }
+  .doc { padding:2px 16px 14px; font-size:14px; max-height:60vh; overflow:auto; border-top:1px solid #eef0ec; }
+  .doc p { margin:8px 0; text-align:justify; } .doc p.t { font-weight:700; margin-top:14px; }
+  .doc p.l { padding-left:14px; position:relative; } .doc p.l::before { content:"•"; position:absolute; left:2px; color:var(--suave); }
+  label.acepto { display:flex; gap:10px; align-items:flex-start; font-size:15px; margin:14px 2px; }
+  label.acepto input { width:22px; height:22px; margin-top:1px; accent-color:var(--verde); flex:none; }
+  .pad-wrap { position:relative; border:2px dashed #b9c2b5; border-radius:10px; background:#fff; }
+  .pad-wrap canvas { display:block; width:100%; aspect-ratio: 3 / 1.25; border-radius:8px; }
+  .pad-wrap .linea { position:absolute; left:8%; right:8%; bottom:24%; border-bottom:1px solid #9aa596; pointer-events:none; }
+  .pad-wrap .ph { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#a3ad9f; pointer-events:none; font-size:15px; }
+  .acciones { display:flex; gap:10px; margin-top:12px; }
+  button { font:inherit; border-radius:10px; padding:13px 16px; border:1px solid var(--borde); background:#fff; color:var(--texto); cursor:pointer; }
+  button.prim { background:var(--verde); color:#fff; border-color:var(--verde); flex:1; font-weight:600; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .msg { padding:12px 14px; border-radius:10px; margin-top:12px; font-size:14px; background:#fdecea; color:#8a1f17; }
+  .aviso { font-size:12px; color:var(--suave); margin-top:10px; }
+  .centro { text-align:center; padding:34px 18px; }
+  .icono { width:64px; height:64px; border-radius:50%; background:#fdecea; color:#8a1f17; display:flex; align-items:center; justify-content:center; font-size:34px; margin:0 auto 12px; }
+</style>
+</head>
+<body>
+<header><small>Policía Nacional · Dirección de Sanidad</small><b>Oficina de Telemática · UPRES Huila</b></header>
+<main id="app"></main>
+<script>// Codifica una firma (lista de trazos) en un texto corto y seguro para URL, y la decodifica.
+// Formato "T1": alto, número de trazos y, por trazo, puntos con deltas en enteros variables (base64url).
+(function (raiz) {
+  const ALF = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  const ANCHO = 1000;
+
+  function escribir(n, out) {
+    do {
+      let b = n & 31;
+      n = Math.floor(n / 32);
+      if (n > 0) b |= 32;
+      out.push(ALF[b]);
+    } while (n > 0);
+  }
+  const zz = (v) => (v < 0 ? -2 * v - 1 : 2 * v);
+  const unzz = (u) => (u % 2 ? -(u + 1) / 2 : u / 2);
+
+  // Simplificación Ramer-Douglas-Peucker
+  function rdp(pts, tol) {
+    if (pts.length < 3) return pts;
+    const [a, b] = [pts[0], pts[pts.length - 1]];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    let max = 0, idx = 0;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d = Math.abs(dy * pts[i][0] - dx * pts[i][1] + b[0] * a[1] - b[1] * a[0]) / len;
+      if (d > max) { max = d; idx = i; }
+    }
+    if (max <= tol) return [a, b];
+    return rdp(pts.slice(0, idx + 1), tol).slice(0, -1).concat(rdp(pts.slice(idx), tol));
+  }
+
+  /**
+   * @param {Array<Array<[number,number]>>} trazos  puntos en píxeles del lienzo
+   * @param {number} w ancho del lienzo  @param {number} h alto del lienzo
+   * @param {number} maxLen longitud máxima del texto
+   */
+  function codificar(trazos, w, h, maxLen = 3200) {
+    const esc = ANCHO / w;
+    const alto = Math.min(1000, Math.round(h * esc));
+    for (const tol of [1.2, 2, 3, 4.5, 6.5, 9]) {
+      const out = ['T', '1'];
+      escribir(alto, out);
+      const ts = trazos.filter((t) => t.length).map((t) => {
+        const q = t.map(([x, y]) => [Math.max(0, Math.min(ANCHO, Math.round(x * esc))), Math.max(0, Math.min(alto, Math.round(y * esc)))]);
+        return rdp(q, tol);
+      });
+      escribir(ts.length, out);
+      for (const t of ts) {
+        escribir(t.length, out);
+        let px = 0, py = 0;
+        t.forEach(([x, y], i) => {
+          if (i === 0) { escribir(x, out); escribir(y, out); } else { escribir(zz(x - px), out); escribir(zz(y - py), out); }
+          px = x; py = y;
+        });
+      }
+      const s = out.join('');
+      if (s.length <= maxLen) return s;
+    }
+    return null;
+  }
+
+  function decodificar(s) {
+    if (typeof s !== 'string' || !s.startsWith('T1')) throw new Error('Formato de firma no reconocido');
+    let i = 2;
+    const leer = () => {
+      let n = 0, mult = 1, b;
+      do {
+        if (i >= s.length) throw new Error('Firma incompleta');
+        b = ALF.indexOf(s[i++]);
+        if (b < 0) throw new Error('Firma con caracteres inválidos');
+        n += (b & 31) * mult; mult *= 32;
+      } while (b & 32);
+      return n;
+    };
+    const alto = leer();
+    const nt = leer();
+    if (nt > 200) throw new Error('Firma no válida');
+    const trazos = [];
+    for (let k = 0; k < nt; k++) {
+      const np = leer();
+      if (np > 5000) throw new Error('Firma no válida');
+      const t = [];
+      let x = 0, y = 0;
+      for (let j = 0; j < np; j++) {
+        if (j === 0) { x = leer(); y = leer(); } else { x += unzz(leer()); y += unzz(leer()); }
+        t.push([x, y]);
+      }
+      trazos.push(t);
+    }
+    if (i !== s.length) throw new Error('Firma alterada');
+    return { ancho: ANCHO, alto, trazos };
+  }
+
+  const api = { codificar, decodificar };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else raiz.Trazo = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>// Pad de firma táctil (dedo, lápiz o mouse). Exporta PNG transparente recortado.
+function crearPadFirma(canvas, { color = '#0b2a6f', grosor = 2.6, alCambiar } = {}) {
+  const ctx = canvas.getContext('2d');
+  let dibujando = false, ultimo = null, vacio = true, trazos = [], anchoPrevio = 0;
+
+  function ajustar() {
+    const datos = vacio ? null : canvas.toDataURL();
+    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+    const r = canvas.getBoundingClientRect();
+    if (anchoPrevio && r.width && r.width !== anchoPrevio) {
+      const f = r.width / anchoPrevio;
+      trazos = trazos.map((t) => t.map(([x, y]) => [x * f, y * f]));
+    }
+    anchoPrevio = r.width;
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = color; ctx.fillStyle = color;
+    if (datos) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, r.width, r.height); img.src = datos; }
+  }
+  const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top, p: e.pressure || 0.5 }; };
+
+  canvas.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); canvas.setPointerCapture(e.pointerId);
+    dibujando = true; ultimo = pos(e);
+    trazos.push([[ultimo.x, ultimo.y]]);
+    ctx.beginPath(); ctx.arc(ultimo.x, ultimo.y, grosor / 2, 0, Math.PI * 2); ctx.fill();
+    if (vacio) { vacio = false; alCambiar && alCambiar(false); }
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dibujando) return;
+    e.preventDefault();
+    const eventos = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of eventos) {
+      const p = pos(ev);
+      trazos[trazos.length - 1].push([p.x, p.y]);
+      const medio = { x: (ultimo.x + p.x) / 2, y: (ultimo.y + p.y) / 2 };
+      ctx.lineWidth = grosor * (e.pointerType === 'pen' ? 0.6 + p.p : 1);
+      ctx.beginPath(); ctx.moveTo(ultimo.mx ?? ultimo.x, ultimo.my ?? ultimo.y);
+      ctx.quadraticCurveTo(ultimo.x, ultimo.y, medio.x, medio.y); ctx.stroke();
+      ultimo = { ...p, mx: medio.x, my: medio.y };
+    }
+  });
+  const fin = () => { dibujando = false; };
+  canvas.addEventListener('pointerup', fin);
+  canvas.addEventListener('pointercancel', fin);
+  canvas.style.touchAction = 'none';
+  window.addEventListener('resize', ajustar);
+  ajustar();
+
+  return {
+    vacio: () => vacio,
+    // Trazos en píxeles CSS + tamaño del lienzo (para codificar la firma en texto)
+    trazos: () => ({ trazos: trazos.map((t) => t.slice()), w: canvas.getBoundingClientRect().width, h: canvas.getBoundingClientRect().height }),
+    limpiar() { ctx.clearRect(0, 0, canvas.width, canvas.height); vacio = true; trazos = []; alCambiar && alCambiar(true); },
+    // PNG recortado al trazo, con margen
+    png() {
+      if (vacio) return null;
+      const { width: w, height: h } = canvas;
+      const d = ctx.getImageData(0, 0, w, h).data;
+      let x0 = w, y0 = h, x1 = 0, y1 = 0;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if (d[(y * w + x) * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      }
+      if (x1 <= x0 || y1 <= y0) return null;
+      const m = 6, cw = x1 - x0 + m * 2, ch = y1 - y0 + m * 2;
+      const escala = Math.min(1, 900 / cw);
+      const out = document.createElement('canvas');
+      out.width = Math.round(cw * escala); out.height = Math.round(ch * escala);
+      out.getContext('2d').drawImage(canvas, x0 - m, y0 - m, cw, ch, 0, 0, out.width, out.height);
+      return out.toDataURL('image/png');
+    },
+  };
+}
+</script>
+<script>
+const TEXTOS = {"0004":{"codigo":"0004","titulo":"1DT-FR-0004 Asignación de usuario y términos de uso","parrafos":[{"t":"«TABLA_DOCUMENTAL_0004»","titulo":true,"lista":false},{"t":"A los «DIA» días del mes de «MES» del año «AÑO» el señor: CPS-4 HARRINSON SANCHEZ ARDILA Administrador Roles SISAP RASES 2 y UPRES HUILA, hace entrega del usuario «USUARIO» al (a la) señor(a): «M_1er_Nombre» «M_2o_Nombre» «M_1er_Apellido» «M_2o_Apellido» identificado(a) con Cédula de Ciudadania «Cédula_No», quien labora en la «Dependencia_ó__ESP» , se desempeña como «Cargo» y quien para el presente documento será denominada como “el titular del usuario”: «USUARIO» y contraseña «CONTRASEÑA», del SISAP - SISTEMA DE INFORMACION SANIDAD POLICIAL .","titulo":false,"lista":false},{"t":"El usuario mencionado anteriormente tiene permisos de:","titulo":false,"lista":false},{"t":"«Rol_1»","titulo":false,"lista":true},{"t":"«Rol_2»","titulo":false,"lista":true},{"t":"«Rol_3»","titulo":false,"lista":true},{"t":"Términos y condiciones de uso:","titulo":false,"lista":false},{"t":"Con el fin de preservar la integridad, confidencialidad y disponibilidad de la infoprmación, la Policía Nacional realiza monitoreo permanente a los recursos de la plataforma tecnológica de nuestra institución.","titulo":false,"lista":false},{"t":"Por tanto, la fuga, pérdida, alteración y/o modificación de la información que sea manipulada a través del presente usuario, sea esta en forma intencional, negligente o con violación al deber objetivo de cuidado, será únicamente responsabilidad del funcionario a quien se le asignó el acceso e implicarán acciones de tipo penal, disciplinario, administrativo y/o fiscal a que haya lugar.","titulo":false,"lista":false},{"t":"Con el fin de ayudarle a utilizar de una forma ágil, eficiente y eficaz los recursos tecnológicos puestos a su disposición, se realizan las siguientes recomendaciones y términos de uso del mismo, así:","titulo":false,"lista":false},{"t":"Responsabilidades frente al uso del usuario, para lo cual debe:","titulo":false,"lista":false},{"t":"Cumplir con la declaración de confidencialidad y compromiso con la seguridad de la información.","titulo":false,"lista":true},{"t":"Cumplir con las políticas y responsabilidades con la seguridad de la información que se encuentran en el Manual destinado para tal fin.","titulo":false,"lista":true},{"t":"La contraseña es entregada en forma segura, el cual debe cambiar de forma inmediata.","titulo":false,"lista":true},{"t":"Memorizar el ID de su usuario y contraseña.","titulo":false,"lista":true},{"t":"Cerrar la sesión o bloquear el computador antes de dejarlo desatendido.","titulo":false,"lista":true},{"t":"Utilizar el usuario desde computadores y equipos de la Policía Nacional, salvo los casos excepcionales autorizados (VPN, Comisiones en otras entidades, etc.).","titulo":false,"lista":true},{"t":"Guardar completa confidencialidad sobre la información a la que tenga acceso por su condición laboral o actividades que desempeña.","titulo":false,"lista":true},{"t":"Tomar todas las medidas de seguridad para evitar que por su intermedio se pueda tener acceso igualmente a la información.","titulo":false,"lista":true},{"t":"Informar cualquier situación administrativa como traslado, retiro, comisión o vacaciones o cualquier tipo de ausencia, al administrador del recurso tecnológico (sistema de información, red, control de acceso, etc.) para que su usuario sea bloqueado, eliminado, o deshabilitado de privilegios (es su obligación y la de su superior inmediato coordinar la suspensión o cancelación del usuario, de lo contrario este seguirá habilitado y cualquier manipulación de la información que se realice con el mencionado, continuará siendo responsabilidad del titular.).","titulo":false,"lista":true},{"t":"Aplicar las políticas de contraseñas definidas en Gestión de identidades (1DT-PR-0003).","titulo":false,"lista":true},{"t":"Cambiar la contraseña cada 45 días.","titulo":false,"lista":true},{"t":"Longitud mínima 10 caracteres.","titulo":false,"lista":true},{"t":"Combinación de letras (mayúsculas, minúsculas), números y caracteres especiales.","titulo":false,"lista":true},{"t":"En el caso de las VPN, el funcionario debe asegurarse de cerrar la sesión una vez finalice la actividad a realizar y conservar las medidas que considere necesarias para evitar que se ponga en riesgo la confidencialidad de su clave de acceso.","titulo":false,"lista":true},{"t":"Responsabilidades frente al uso del usuario, para lo cual no debe:","titulo":false,"lista":false},{"t":"Escribir el ID de su usuario y la contraseña, en agendas, post-it, entre otros, se recomienda memorizarlos para evitar que alguien encuentre esta información y acceda a la red con sus roles.","titulo":false,"lista":true},{"t":"Compartir o revelar su usuario y contraseña (asignados mediante el presente formato, los cuales son personales e intransferibles, por tal razón no pueden ser compartidos, cedidos o entregados a terceros).","titulo":false,"lista":true},{"t":"Ordenar la entrega del usuario y contraseña de un subalterno a otro.","titulo":false,"lista":true},{"t":"Extraer, consultar, copiar, borrar, revelar información crítica y sensible a la que tenga acceso en perjuicio de la Policía Nacional o de sus funcionarios.","titulo":false,"lista":true},{"t":"Usar ilegalmente la información obtenida en su beneficio personal o en el de terceros.","titulo":false,"lista":true},{"t":"Responsabilidades frente al uso de suite de herramientas colaborativas en la nube:","titulo":false,"lista":false},{"t":"Leer los términos y condiciones establecidos por el proveedor de las herramientas colaborativas en la nube.","titulo":false,"lista":true},{"t":"En virtud del servicio público permanente que presta la Policía Nacional de Colombia, los usuarios de las herramientas colaborativas, se recomienda ingresar por lo menos una vez al día a la cuenta de correo electrónico asignada.","titulo":false,"lista":true},{"t":"El titular de la cuenta es responsable de garantizar la confidencialidad, integridad y uso adecuado de la información, archivos, documentos y mensajes enviados y recibidos a través de las herramientas colaborativas.","titulo":false,"lista":true},{"t":"El titular de la cuenta asume la responsabilidad de asegurarse que la información enviada a través de las diferentes herramientas colaborativas sea apropiada y estén en conformidad con las normativas y regulaciones aplicables. Evitando la difusión de contenido ofensivo, ilegal o que pueda comprometer la imagen institucional.","titulo":false,"lista":true},{"t":"El titular de la cuenta es el responsable de tomar las medidas necesarias para proteger la información y evitar accesos no autorizados a la cuenta. Esto incluye, uso de contraseñas seguras y cambio periódico, no compartir las credenciales de acceso con terceros, mantener el software de seguridad actualizado y cumplir con las políticas y directrices establecidas por la institución.","titulo":false,"lista":true},{"t":"El titular de la cuenta es el responsable de dar trámite o responder, dentro de su competencia y los términos legales, a las peticiones, acciones de tutela y demás solicitudes recibidas a través de las diferentes herramientas colaborativas; siguiendo y dando estricto cumplimiento a las disposiciones legales e institucionales vigentes.","titulo":false,"lista":true},{"t":"Solicitar al grupo de comunicaciones unificadas o el que haga sus veces, el bloqueo de todo correo de procedencia desconocida que no contenga información institucional, correo no deseado, spam, entre otros, al igual que evitar reenviarlo hacia otras cuentas institucionales.","titulo":false,"lista":true},{"t":"Revisar diariamente la carpeta de \"correo no deseado\", ya que puede haber mensajes importantes que hayan sido filtrados incorrectamente. Si existen mensajes legítimos en la carpeta de \"correo no deseado\", se debe marcar como \"correo deseado\" para que el sistema ajuste los criterios de filtrado.","titulo":false,"lista":true},{"t":"Utilizar las aplicaciones de la cuenta asignada, únicamente en dispositivos seguros que cuenten con antivirus confiables y estén actualizados con los últimos parches de seguridad. Esto garantiza la protección de la información y previene posibles amenazas de seguridad.","titulo":false,"lista":true},{"t":"Realizar el registro y mantener actualizados los datos de autenticación para poder gestionar la contraseña de la cuenta de forma autónoma.","titulo":false,"lista":true},{"t":"Antes de enviar un mensaje, verificar que el destinatario del mensaje corresponda a quien se desea hacer llegar la información, al igual que clasificarla en los términos de la Ley 1712 de 2014 “Por medio de la cual se crea la Ley de Transparencia y del Derecho de Acceso a la Información Pública Nacional y se dictan otras disposiciones”.","titulo":false,"lista":true},{"t":"Configurar y utilizar el estándar de formato, firma e imagen institucional, al igual que el mensaje legal de confidencialidad de la Policía Nacional de Colombia para el envío de correos electrónicos.","titulo":false,"lista":true},{"t":"Utilizar la opción de CCO (con copia oculta) al enviar un mensaje a varios destinatarios para proteger su privacidad y evitar que las direcciones de correo sean visibles para otros.","titulo":false,"lista":true},{"t":"El titular de la cuenta es el responsable de la información, archivos, datos y mensajes enviados y recibidos a través de las diferentes herramientas colaborativas. Lo que implica garantizar la confidencialidad, integridad, conservación y uso adecuado de dicha información.","titulo":false,"lista":true},{"t":"Es responsabilidad exclusiva del titular de la cuenta, garantizar la confidencialidad, integridad y preservación de los respaldos o backup generados en formato .pst (tabla de almacenamiento personal) del buzón de correo.","titulo":false,"lista":true},{"t":"La información generada y almacenada en las aplicaciones destinadas para video conferencias y chat, será responsabilidad exclusiva del titular de la cuenta. Esto implica asegurar la confidencialidad, integridad, conservación y uso adecuado de dicha información","titulo":false,"lista":true},{"t":"En el marco de la Ley 1266 de 2008 “Por la cual se dictan las disposiciones generales del hábeas data y se regula el manejo de la información contenida en bases de datos personales, en especial la financiera, crediticia, comercial, de servicios y la proveniente de terceros países y se dictan otras disposiciones”, la Ley 1581 de 2012 “Por la cual se dictan disposiciones generales para la protección de datos personales” y del Capítulo 25 del Decreto 1074 de 2015 “Por medio del cual se expide el Decreto Único Reglamentario del Sector Comercio, Industria y Turismo”, el titular de la cuenta, cuando reciba correos promocionales, comerciales o de otra índole de personas jurídicas particulares o naturales con fines no institucionales, debe informar a través del Gestor de Contenidos Policiales o el que haga sus veces, al Área de Defensa Judicial de la Secretaria General o el que haga sus veces, para que presente la respectiva queja ante la Superintendencia de Industria y Comercio, anexando los soportes y la solicitud de autorización para la recolección y tratamiento de los datos personales a esas personas jurídicas o naturales","titulo":false,"lista":true},{"t":"Informar de manera inmediata al Jefe del Grupo Tecnologías de la Información y las Comunicaciones de su unidad o el que haga sus veces, o al correo electrónico ponal.csirt@policia.gov.co o a través del Sistema de Información para la Gestión de Incidentes en TIC o el que haga sus veces, cualquier afectación de la disponibilidad, integridad y confidencialidad de la información que se pueda presentar en las herramientas colaborativas.","titulo":false,"lista":true},{"t":"Prohibiciones frente al uso de suite de herramientas colaborativas en la nube:","titulo":false,"lista":false},{"t":"Bloquear las direcciones electrónicas institucionales, impidiendo la recepción de mensajes de correo, notificaciones, comunicados, edictos, informes, solicitudes, órdenes, encuestas y demás información de carácter institucional.","titulo":false,"lista":true},{"t":"Configurar el buzón para que realice reenvíos o redirección de mensajes electrónicos de forma automática.","titulo":false,"lista":true},{"t":"Compartir o revelar las credenciales de acceso a la cuenta con terceros. Estos datos son confidenciales, personales y no deben ser transferidos o divulgados en ninguna circunstancia.","titulo":false,"lista":true},{"t":"Usar las diferentes herramientas colaborativas para transmitir información confidencial o sensible de la institución, sin previa autorización del jefe inmediato.","titulo":false,"lista":true},{"t":"Expresar opiniones o ideas en nombre de la Policía Nacional a través de las diferentes herramientas colaborativas, a menos que se cuente con la debida autorización.","titulo":false,"lista":true},{"t":"Enviar o participar en el envío de cadenas de correo no deseado (\"spam\"), bulos, mensajes anónimos, esquemas piramidales u otras actividades similares que vayan en contra de los principios de la función pública y la institución, al igual que contravengan las normas constitucionales y legales, la moral y el orden público.","titulo":false,"lista":true},{"t":"Utilizar las diferentes herramientas colaborativas para transmitir, enviar o reenviar material que pueda ser considerado confidencial, político, obsceno, amenazador, ofensivo, difamatorio u otros contenidos inapropiados.","titulo":false,"lista":true},{"t":"Suplantar la identidad de otra persona mediante el uso de encabezados, ya sean auténticos o falsificados, o cualquier otra forma de manipulación de información personal.","titulo":false,"lista":true},{"t":"Reenviar mensajes de correo electrónico sin el permiso del autor, que por error haya llegado a su buzón; si el mensaje no es de su competencia debe informar de forma inmediata al remitente y proceder a eliminarlo.","titulo":false,"lista":true},{"t":"Enviar mensajes de correo a más de 500 destinatarios en un solo envío (se excluyen grupos previamente creados), ya que esto bloquea la cuenta y los mensajes son clasificados como correo no deseado o SPAM.","titulo":false,"lista":true},{"t":"Suministrar información personal a través de formularios de origen desconocido que lleguen a su correo electrónico. Estos podrían ser intentos de Phishing diseñados para obtener datos confidenciales.","titulo":false,"lista":true},{"t":"Utilizar la cuenta para el envío de mensajes no institucionales; so pena de incurrir en eventuales trasgresiones de la Ley 2196 de 2022 “Por medio de la cual se expide el Estatuto Disciplinario Policial”.","titulo":false,"lista":true},{"t":"Acceder a enlaces o correos electrónicos que pongan en riesgo el Sistema de Gestión de Seguridad, Privacidad de la Información y Seguridad Digital para la Policía Nacional, al igual que contengan virus informativos y software malicioso.","titulo":false,"lista":true},{"t":"Recopilar cuentas de correo institucional con el fin de compartir los contactos o listas de distribución con personal externo, con el objetivo de propiciar el envío de información no institucional o no autorizada.","titulo":false,"lista":true},{"t":"No siendo otro el motivo firma los que en ella participaron, previa lectura, entendimiento total y aceptación de lo expuesto, así:","titulo":false,"lista":false},{"t":"Post-firma quien entrega el usuario","titulo":false,"lista":false},{"t":"CPS-4 HARRINSON SANCHEZ ARDILA","titulo":true,"lista":false},{"t":"Post-firma quien recibe el usuario","titulo":false,"lista":false},{"t":"«M_1er_Nombre» «M_2o_Nombre» «M_1er_Apellido» «M_2o_Apellido»","titulo":false,"lista":false},{"t":"Jefe inmediato y/o supervisor","titulo":false,"lista":false},{"t":"«SUPERVISOR»","titulo":true,"lista":false},{"t":"INFORMACIÓN PÚBLICA CLASIFICADA","titulo":true,"lista":false}]},"0016":{"codigo":"0016","titulo":"1DT-FR-0016 Declaración de confidencialidad y compromiso con la seguridad de la información","parrafos":[{"t":"«TABLA_DOCUMENTAL_0016»","titulo":true,"lista":false},{"t":"La Policía Nacional, considerando que usted ofrece condiciones personales y profesionales para acceder a la información que se administra en la Institución, teniendo en cuenta la misión de la Policía Nacional y que esta implica manejar información de diferentes niveles de clasificación, requiere que en correspondencia con el voto de confianza otorgado con la posibilidad de acceso a la información de la Policía Nacional usted suscriba el siguiente compromiso.","titulo":false,"lista":false},{"t":"Yo, «M_1er_Nombre» «M_2o_Nombre» «M_1er_Apellido» «M_2o_Apellido»","titulo":false,"lista":false},{"t":"Identificado con Cédula de Ciudadania No. «Cédula_No», con domicilio en _NEIVA________________________________, quien cumple funciones en la empresa «Dependencia_ó__ESP» , en el cargo «Cargo» , en adelante denominado EL CONTRATISTA O TERCERO, bajo el contrato _X_ convenio ___ acuerdo __ No. «CONTRATO_N» del «INICIO_CONTRATO» al «FINAL_DE_CONTRATO», me comprometo a cumplir cabalmente los compromisos y demás directrices del Sistema de Gestión de Seguridad de la Información para la Policía Nacional.","titulo":false,"lista":false},{"t":"Así mismo declaro que:","titulo":false,"lista":false},{"t":"Reconozco que la información es un activo sobre el cual se sustentan los objetivos estratégicos de la Institución y que es mi responsabilidad conocer las políticas de seguridad de la información, adoptarlas, cumplirlas, hacerlas respetar e informar cualquier incidente que se presente con el uso y manipulación de la misma al Jefe de la Oficina Tecnologías de la Información y Comunicaciones, Administrador de Seguridad de la Información, Analista de Seguridad de la Información, Técnico Tecnologías de la Información y las Comunicaciones o quien hagas sus veces en la unidad, el cual reportará el incidente al Grupo de Seguridad de la Información y Respuesta a Incidentes informáticos – CSIRT-PONAL.","titulo":false,"lista":false},{"t":"Esta declaración comienza con la firma del contrato, convenio o acuerdo que genera vínculo con la Policía Nacional y permanecerá vigente mientras subsista el objeto que dio inició al mismo. Este compromiso debe ser firmado nuevamente cada vez que se suscriba un contrato con la Policía Nacional, y debe reposar junto con las hojas de vida de los funcionarios contratistas que van a cumplir funciones con la Institución.","titulo":false,"lista":false},{"t":"CONFIDENCIALIDAD","titulo":true,"lista":false},{"t":"EL CONTRATISTA O TERCERO se obliga en forma directa e irrevocable ante la POLICÍA NACIONAL a no revelar, divulgar o facilitar, bajo cualquier forma, a ninguna persona natural o jurídica, sea esta pública o privada y a no utilizar para su propio beneficio o para beneficio de terceros, la información relacionada con el ejercicio de sus funciones en la Policía Nacional, así como también las políticas o cualquier otra información vinculada con su rol en la Institución.","titulo":false,"lista":true},{"t":"EL CONTRATISTA O TERCERO asume la obligación de mantener la confidencialidad acordada en la presente declaración de confidencialidad y compromiso con la seguridad de la información por el tiempo que dure vigente la relación laboral y por un plazo adicional de 2 años contados a partir de la extinción del vínculo contractual, acuerdo o convenio.","titulo":false,"lista":true},{"t":"La violación o el incumplimiento de la declaración de confidencialidad y compromiso con la seguridad de la información, por parte EL CONTRATISTA O TERCERO, generará las acciones de tipo penal, disciplinario, administrativo o fiscal a que haya lugar.","titulo":false,"lista":true},{"t":"Si una orden judicial obligara a EL CONTRATISTA O TERCERO a divulgar información clasificada o reservada, este se compromete a dar aviso previo a la POLICÍA NACIONAL de modo que la Institución pueda impugnar la solicitud o procurar una orden judicial que lo proteja.","titulo":false,"lista":true},{"t":"El CONTRATISTA O TERCERO reconoce que esta información tiene un valor intangible, que no es generalmente dado a conocer al público o a terceros que podrían usarla en contra de la POLICÍA NACIONAL, de sus integrantes, de los habitantes de Colombia o del mismo Estado y que la información está sujeta a un esfuerzo razonable de la POLICÍA NACIONAL para mantener su reserva y confidencialidad. Así mismo, EL CONTRATISTA O TERCERO no hará ninguna duplicación o copia del material clasificado o reservado.","titulo":false,"lista":true},{"t":"El CONTRATISTA O TERCERO devolverá inmediatamente todo material clasificado o reservado que se le haya entregado o asignado cuando así lo requiera o solicite la POLICÍA NACIONAL.","titulo":false,"lista":true},{"t":"El CONTRATISTA O TERCERO se compromete a no utilizar información o material clasificado o reservado, una vez finalizada la relación contractual o laboral.","titulo":false,"lista":true},{"t":"El CONTRATISTA O TERCERO se compromete a guardar completa confidencialidad sobre la información a la que tenga acceso por su condición laboral o actividades que desempeñe, así mismo a no extraer, consultar, copiar, borrar, ni revelar información crítica y sensible a la que tenga acceso en perjuicio de la Policía Nacional o de sus funcionarios.","titulo":false,"lista":true},{"t":"RESERVA DURANTE LA EJECUCIÓN DEL CONTRATO, CONVENIO o ACUERDO.","titulo":false,"lista":false},{"t":"El CONTRATISTA reconoce que todos los trabajos llevados a cabo en LA POLICÍA NACIONAL son sujetos a la dirección y control por parte de la Institución Policial y constituyen una función contratada de conformidad a lo establecido en el régimen jurídico vigente aplicable a los CONTRATISTAS.","titulo":false,"lista":true},{"t":"El CONTRATISTA o TERCERO informará a la POLICÍA NACIONAL cualquier descubrimiento, invento o creación que haya hecho, considerándose esto como parte del material clasificado o reservado, los cuales corresponderán a actividades propias desarrolladas con ocasión a la ejecución del objeto contratado, convenido o acordado y serán de propiedad de la POLICÍA NACIONAL.","titulo":false,"lista":true},{"t":"ME COMPROMETO CON LA SEGURIDAD DE LA INFORMACIÓN DE LA POLICÍA NACIONAL, toda vez que:","titulo":false,"lista":false},{"t":"He leído, comprendido, e interiorizado la Política de Seguridad de la Información que se encuentran en el Manual del Sistema de Gestión de la Seguridad de la Información vigente para la Policía Nacional y es mi deber conocer la última versión que exista del mencionado documento.","titulo":false,"lista":true},{"t":"Conozco mis deberes y derechos con respecto a la seguridad de la información.","titulo":false,"lista":true},{"t":"Entiendo que el incumplimiento de las políticas de seguridad de la información, ya sea en forma intencional, negligente o con violación al deber objetivo de cuidado, implican acciones de tipo penal, disciplinario, administrativo o fiscal a que haya lugar.","titulo":false,"lista":true},{"t":"Comprendo que dado el caso que se cause un daño a la Policía Nacional, como consecuencia de la inobservancia al deber objetivo de cuidado, la Policía Nacional podrá adelantar las acciones penales, civiles o contenciosas administrativas, en aras de buscar el resarcimiento de los daños y perjuicios que se llegaren a causar.","titulo":false,"lista":true},{"t":"Suscribo este compromiso en NEIVA-HUILA, el «DIA» días del mes de «MES» del año «AÑO».","titulo":false,"lista":false},{"t":"EL CONTRATISTA O TERCERO","titulo":true,"lista":false},{"t":"Post-Firma: «M_1er_Nombre» «M_2o_Nombre» «M_1er_Apellido» «M_2o_Apellido»","titulo":false,"lista":false},{"t":"Identificación «Cédula_No»","titulo":false,"lista":false},{"t":"Empresa: «Dependencia_ó__ESP»","titulo":false,"lista":false},{"t":"Cargo: «Cargo»","titulo":false,"lista":false},{"t":"INFORMACIÓN PÚBLICA RESERVADA","titulo":true,"lista":false}]}};
+const HOSTS_FORMS = ['forms.office.com', 'forms.microsoft.com', 'forms.cloud.microsoft'];
+const app = document.getElementById('app');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function error(t, d) {
+  app.innerHTML = `<div class="card centro"><div class="icono">!</div><h1>${esc(t)}</h1><p class="sub">${esc(d || 'Comuníquese con la Oficina de Telemática.')}</p></div>`;
+}
+function leerDatos() {
+  const h = location.hash.slice(1);
+  if (!h) return null;
+  const b64 = h.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
+  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+let D;
+try { D = leerDatos(); } catch (e) { D = null; }
+if (!D || !D.f) error('Enlace incompleto', 'Abra el enlace completo tal como llegó en el correo.');
+else {
+  let host = '';
+  try { host = new URL(D.f).hostname; } catch {}
+  if (!HOSTS_FORMS.includes(host) || !D.f.includes('__FIRMA__')) error('Enlace no válido');
+  else if (D.vence && new Date(D.vence) < new Date()) error('Este enlace venció', 'Solicite uno nuevo a la Oficina de Telemática.');
+  else pintar(D);
+}
+
+function pintar(d) {
+  const sup = d.rol === 'supervisor';
+  const r = d.resumen || {};
+  const fill = (t) => t.replace(/«([^»]+)»/g, (m, k) => (d.v && k in d.v ? d.v[k] : ''));
+  const docs = (d.fmts || []).filter((f) => TEXTOS[f]).map((f) => `<details ${d.fmts.length === 1 ? 'open' : ''}>
+      <summary>${esc(TEXTOS[f].titulo)}</summary>
+      <div class="doc">${TEXTOS[f].parrafos.map((p) => `<p class="${p.titulo ? 't' : ''} ${p.lista ? 'l' : ''}">${esc(fill(p.t))}</p>`).join('')}</div>
+    </details>`).join('');
+  const cred = !sup && r.usuario ? `<div class="cred"><div><span>Usuario</span><b>${esc(r.usuario)}</b></div><div><span>Contraseña</span><b>${esc(r.contrasena)}</b></div></div>
+    <p class="aviso">Memorícela y cámbiela al ingresar por primera vez. No la comparta.</p>` : '';
+  const varios = d.fmts.length > 1;
+  app.innerHTML = `
+    <div class="pasos"><span class="on">1. Leer y firmar</span><span>2. Enviar</span></div>
+    <div class="card">
+      <p class="sub">${sup ? 'Firma como jefe inmediato y/o supervisor' : 'Asignación de usuario y compromiso de confidencialidad'}</p>
+      <h1>${sup ? 'Visto bueno para ' + esc(d.nombre) : 'Hola, ' + esc(d.nombre)}</h1>
+      ${cred}
+    </div>
+    <div class="card">
+      <div class="dato"><span>Cédula</span><b>${esc(r.cedula)}</b></div>
+      <div class="dato"><span>Cargo</span><b>${esc(r.cargo)}</b></div>
+      <div class="dato"><span>Dependencia</span><b>${esc(r.dependencia)}</b></div>
+      ${(r.roles || []).length ? `<div class="dato"><span>Permisos</span><b>${r.roles.map(esc).join('<br>')}</b></div>` : ''}
+      ${r.supervisor ? `<div class="dato"><span>Supervisor</span><b>${esc(r.supervisor)}</b></div>` : ''}
+    </div>
+    <div class="card">
+      <b>${varios ? 'Lea los documentos' : 'Lea el documento'}</b>
+      ${docs}
+      <label class="acepto"><input type="checkbox" id="acepto"> <span>He leído, entiendo y ${sup ? 'doy mi visto bueno a' : 'acepto'} ${varios ? 'los documentos anteriores' : 'el documento anterior'}.</span></label>
+      <b>Firme aquí con el dedo</b>
+      <div class="pad-wrap" style="margin-top:8px"><canvas id="pad"></canvas><div class="linea"></div><div class="ph" id="ph">Firme dentro del recuadro</div></div>
+      <div class="acciones"><button id="limpiar" type="button">Borrar</button><button id="seguir" class="prim" type="button" disabled>Continuar</button></div>
+      <div id="msg"></div>
+      <p class="aviso">Al continuar se abre un formulario de Microsoft con sus datos. Solo debe presionar <b>Enviar</b> para que la firma quede registrada.</p>
+    </div>`;
+  const chk = document.getElementById('acepto');
+  const btn = document.getElementById('seguir');
+  const ph = document.getElementById('ph');
+  const pad = crearPadFirma(document.getElementById('pad'), { alCambiar: (v) => { ph.style.display = v ? '' : 'none'; validar(); } });
+  const validar = () => { btn.disabled = !(chk.checked && !pad.vacio()); };
+  chk.addEventListener('change', validar);
+  document.getElementById('limpiar').onclick = () => pad.limpiar();
+  btn.onclick = () => {
+    const { trazos, w, h } = pad.trazos();
+    const codigo = Trazo.codificar(trazos, w, h);
+    if (!codigo) { document.getElementById('msg').innerHTML = '<div class="msg">La firma es demasiado compleja. Bórrela y fírmela de nuevo, un poco más simple.</div>'; return; }
+    btn.disabled = true; btn.textContent = 'Abriendo formulario…';
+    location.href = d.f.replace('__FIRMA__', codigo);
+  };
+}
+</script>
+</body>
+</html>
